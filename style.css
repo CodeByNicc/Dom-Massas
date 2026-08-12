@@ -13,6 +13,7 @@
 }
 *{box-sizing:border-box; margin:0; padding:0;}
 html{scroll-behavior:smooth;}
+html,body{max-width:100%; overflow-x:hidden;}
 body{
   background:var(--cream);
   color:var(--brown);
@@ -155,7 +156,7 @@ header{
 }
 .step-hint{font-size:0.82rem; color:#8a7a6c; font-weight:400; margin-left:4px;}
 
-.option-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px;}
+.option-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:10px;}
 .option-card{
   border:2px solid #e6dcc8; border-radius:10px;
   padding:12px 14px; cursor:pointer; background:#fffdf7;
@@ -187,8 +188,9 @@ header{
 .stepper{display:flex; align-items:center; gap:0; border:1px solid var(--red); border-radius:999px; overflow:hidden;}
 .stepper button{
   background:none; border:none; color:var(--red);
-  width:30px; height:30px; font-size:1.1rem; font-weight:700;
+  width:36px; height:36px; font-size:1.1rem; font-weight:700;
   display:flex; align-items:center; justify-content:center;
+  touch-action:manipulation;
 }
 .stepper button:hover{background:var(--red); color:var(--cream);}
 .stepper .stepper-val{min-width:22px; text-align:center; font-family:'Space Mono',monospace; font-size:0.92rem;}
@@ -207,7 +209,7 @@ header{
 
 .dish-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+  grid-template-columns:repeat(auto-fill, minmax(min(260px,100%),1fr));
   gap:18px;
 }
 .dish-card{
@@ -232,8 +234,9 @@ header{
 .qty-stepper{display:flex; align-items:center; gap:0; border:1px solid var(--red); border-radius:999px; overflow:hidden;}
 .qty-stepper button{
   background:none; border:none; color:var(--red);
-  width:30px; height:30px; font-size:1.1rem; font-weight:700;
+  width:34px; height:34px; font-size:1.1rem; font-weight:700;
   display:flex; align-items:center; justify-content:center;
+  touch-action:manipulation;
 }
 .qty-stepper button:hover{background:var(--red); color:var(--cream);}
 .qty-stepper .qty-val{min-width:22px; text-align:center; font-family:'Space Mono',monospace; font-size:0.92rem;}
@@ -293,8 +296,9 @@ header{
 }
 .ticket-head h3{font-size:1.4rem;}
 .close-cart{
-  position:absolute; top:16px; right:18px;
+  position:absolute; top:8px; right:10px;
   background:none; border:none; color:var(--cream); font-size:1.4rem; line-height:1;
+  width:44px; height:44px; display:flex; align-items:center; justify-content:center;
 }
 
 .ticket-body{flex:1; overflow-y:auto; padding:18px 22px;}
@@ -323,7 +327,7 @@ header{
 .ticket-total .value{font-size:1.5rem; font-weight:700; color:var(--red);}
 
 .checkout-btn{
-  margin:0 22px 22px; padding:15px; border:none; border-radius:999px;
+  margin:0 22px calc(22px + env(safe-area-inset-bottom, 0px)); padding:15px; border:none; border-radius:999px;
   background:var(--whats); color:#fff; font-weight:700; font-size:1rem;
   display:flex; align-items:center; justify-content:center; gap:10px;
 }
@@ -337,7 +341,7 @@ header{
 }
 .field input, .field select, .field textarea{
   width:100%; padding:11px 12px; border:1px solid #e6dcc8;
-  border-radius:var(--radius); font-family:inherit; font-size:0.92rem;
+  border-radius:var(--radius); font-family:inherit; font-size:16px;
   background:#fff;
 }
 .field textarea{resize:vertical; min-height:60px;}
@@ -369,4 +373,75 @@ footer p{margin-top:6px; color:#c9b79a;}
   .hero-inner{grid-template-columns:1fr; padding:44px 20px;}
   .hero-art{order:-1; max-width:220px; margin:0 auto;}
   .builder-body{padding:20px;}
+}
+
+@media (max-width:600px){
+  .section{padding:48px 18px;}
+  .section-head{margin-bottom:32px;}
+  .builder-head{padding:18px 20px;}
+  .builder-body{padding:18px;}
+  .step{margin-bottom:26px;}
+  .builder-footer{
+    flex-direction:column; align-items:stretch; padding:18px 20px;
+  }
+  .builder-total{text-align:center; font-size:1.2rem;}
+  .add-box-btn{width:100%; padding:15px;}
+
+  .dish-grid{grid-template-columns:1fr 1fr; gap:12px;}
+  .dish-card{padding:14px;}
+
+  .cart-panel{width:100%;}
+  .ticket-body{padding:16px 18px;}
+  .ticket-total{padding:14px 18px;}
+  .checkout-btn{margin:0 18px 18px; padding:16px;}
+  .form-fields{padding:16px 18px;}
+}
+
+@media (max-width:480px){
+  header{padding:10px 14px;}
+  .logo{gap:8px;}
+  .logo-mark{width:38px; height:38px;}
+  .logo-text{font-size:1.08rem;}
+  .logo-sub{font-size:0.58rem;}
+  .cart-btn{padding:9px 14px; font-size:0.82rem; gap:6px;}
+
+  .hero-inner{padding:32px 16px;}
+  .hero p{font-size:0.96rem;}
+  .hero-cta{padding:13px 22px; font-size:0.92rem;}
+
+  .section{padding:40px 14px;}
+  .section-head p{padding:0 4px;}
+
+  .builder-head{
+    flex-direction:column; align-items:flex-start; gap:8px; padding:16px 16px;
+  }
+  .builder-body{padding:14px;}
+  .option-grid{grid-template-columns:repeat(auto-fill, minmax(115px,1fr)); gap:8px;}
+  .option-card{padding:10px 12px;}
+  .step-title{font-size:1rem; flex-wrap:wrap; row-gap:4px;}
+
+  .extras-row{flex-wrap:wrap; gap:10px;}
+
+  .dish-grid{grid-template-columns:1fr; gap:12px;}
+
+  .ticket-line{grid-template-columns:1fr auto; row-gap:6px;}
+  .ticket-line .remove-x{grid-row:1; grid-column:2; justify-self:end;}
+  .ticket-line .line-price{grid-column:1 / -1; text-align:left; font-size:0.92rem;}
+
+  .ticket-head .stamp{margin-bottom:8px;}
+  .ticket-head h3{font-size:1.2rem;}
+
+  footer{padding:32px 18px;}
+}
+
+@media (max-width:360px){
+  .logo-sub{display:none;}
+  .cart-btn{padding:8px 11px; font-size:0.76rem;}
+  .hero h1{font-size:1.9rem;}
+  .option-grid{grid-template-columns:repeat(auto-fill, minmax(100px,1fr));}
+}
+
+@media (max-height:420px) and (orientation:landscape){
+  header{position:static;}
+  .hero-inner{padding:24px 16px;}
 }
