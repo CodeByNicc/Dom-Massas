@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Don Massas — O sabor que você manda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"><img src="img/WhatsApp Image 2026-08-11 at 21.06.11.jpeg" alt="Don Massas"></div>
+    <div>
+      <div class="logo-text">Don Massas</div>
+      <div class="logo-sub">O sabor que você manda</div>
+    </div>
+  </div>
+  <button class="cart-btn" id="openCartBtn">
+    <span>Comanda</span>
+    <span class="cart-count" id="cartCount">0</span>
+  </button>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Sabor sem regras</div>
+      <h1>Monte o seu <span>Don</span> do jeito que você quiser.</h1>
+      <p>Escolha a massa, o molho e 5 acompanhamentos — ou peça uma das sugestões do chef. Monte sua comanda e envie o pedido direto pelo WhatsApp.</p>
+      <a href="#montar" class="hero-cta">Montar meu Don ↓</a>
+    </div>
+    <div class="hero-art">
+      <div class="ring"><img src="img/WhatsApp Image 2026-08-11 at 21.06.11.jpeg" alt="Don Massas"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="montar">
+  <div class="section-head">
+    <div class="eyebrow">Monte seu Don</div>
+    <h2>Seu box de 400g a 450g</h2>
+    <p>Valor único de R$ 29,99. Escolha 1 massa, 1 molho e 5 acompanhamentos inclusos.</p>
+  </div>
+
+  <div class="builder">
+    <div class="builder-head">
+      <h3>Monte seu Don</h3>
+      <span class="builder-price">Valor único R$ 29,99</span>
+    </div>
+    <div class="builder-body">
+      <div class="step">
+        <div class="step-title"><span class="step-num">1</span> Escolha sua massa</div>
+        <div class="option-grid" id="massaGrid"></div>
+      </div>
+      <div class="step">
+        <div class="step-title"><span class="step-num">2</span> Escolha seu molho</div>
+        <div class="option-grid" id="molhoGrid"></div>
+      </div>
+      <div class="step">
+        <div class="step-title"><span class="step-num">3</span> Escolha seus acompanhamentos <span class="step-hint">(5 inclusos)</span></div>
+        <div class="acomp-counter" id="acompCounter"></div>
+        <div class="option-grid" id="acompGrid"></div>
+      </div>
+      <div class="step">
+        <div class="step-title"><span class="step-num">+</span> Adicionais</div>
+        <div class="extras-row">
+          <div>
+            <div class="extras-label">Proteína extra</div>
+            <div class="extras-price">R$ 5,00 cada</div>
+          </div>
+          <div class="stepper">
+            <button id="proteinaMinus">−</button>
+            <span class="stepper-val" id="proteinaVal">0</span>
+            <button id="proteinaPlus">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="builder-footer">
+      <div class="builder-total" id="builderTotal">R$ 29,99</div>
+      <button class="add-box-btn" id="addBoxBtn" disabled>Adicionar à comanda</button>
+    </div>
+  </div>
+</section>
+
+<section class="section extras-section" id="cardapio">
+  <div class="extras-block">
+    <div class="section-head">
+      <div class="eyebrow">Sugestões do chef</div>
+      <h2>Favoritos do Don</h2>
+    </div>
+    <div class="dish-grid" id="chefGrid"></div>
+  </div>
+
+  <div class="extras-block">
+    <div class="extras-block-title">Bebidas</div>
+    <div class="dish-grid" id="bebidasGrid"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="logo-text">Don Massas</div>
+  <p>O sabor que você manda.</p>
+  <p>Pedidos exclusivamente pelo site, via WhatsApp.</p>
+</footer>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="cart-panel" id="cartPanel">
+  <div id="cartView">
+    <div class="ticket-head">
+      <button class="close-cart" id="closeCartBtn">&times;</button>
+      <div class="stamp">Comanda</div>
+      <h3>Seu pedido</h3>
+    </div>
+    <div class="ticket-body" id="ticketBody"></div>
+    <div class="ticket-total">
+      <span class="label">Total</span>
+      <span class="value" id="cartTotal">R$ 0,00</span>
+    </div>
+    <button class="checkout-btn" id="goToCheckoutBtn" disabled>Continuar pedido →</button>
+  </div>
+
+  <div id="checkoutView">
+    <div class="ticket-head">
+      <button class="close-cart" id="closeCartBtn2">&times;</button>
+      <div class="stamp">Finalizar</div>
+      <h3>Seus dados</h3>
+    </div>
+    <button class="back-link" id="backToCartBtn">← Voltar pra comanda</button>
+    <form id="checkoutForm" class="form-fields">
+      <div class="field">
+        <label for="custName">Nome completo</label>
+        <input type="text" id="custName" required placeholder="Seu nome">
+      </div>
+      <div class="field">
+        <label for="custPhone">Telefone / WhatsApp</label>
+        <input type="tel" id="custPhone" required placeholder="(81) 99999-9999">
+      </div>
+      <div class="field">
+        <label for="custAddress">Endereço de entrega</label>
+        <input type="text" id="custAddress" required placeholder="Rua, número, bairro">
+      </div>
+      <div class="field">
+        <label for="custPayment">Forma de pagamento</label>
+        <select id="custPayment">
+          <option>Pix</option>
+          <option>Cartão na entrega</option>
+          <option>Dinheiro</option>
+        </select>
+      </div>
+      <div class="field" id="trocoField" hidden>
+        <label for="custTrocoPara">Troco para quanto?</label>
+        <input type="number" id="custTrocoPara" min="0" step="0.01" inputmode="decimal" placeholder="Ex: 50,00">
+        <div class="troco-info" id="trocoInfo"></div>
+      </div>
+      <div class="field">
+        <label for="custNotes">Observações (opcional)</label>
+        <textarea id="custNotes" placeholder="Ex: sem cebola, troco para R$100..."></textarea>
+      </div>
+    </form>
+    <div class="summary-recap" id="summaryRecap"></div>
+    <button class="checkout-btn" id="sendWhatsBtn">
+      Enviar pedido pelo WhatsApp
+    </button>
+  </div>
+</aside>
+
+<script src="script.js"></script>
+</body>
+</html>

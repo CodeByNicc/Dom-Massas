@@ -1,0 +1,59 @@
+:root{
+  --red:#7A1018;
+  --red-bright:#C1272D;
+  --gold:#D4AF6A;
+  --brown:#3B2417;
+  --charcoal:#241408;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  background:#e9e2d3;
+  color:var(--charcoal);
+  font-family:'Work Sans', sans-serif;
+  padding:24px 12px 60px;
+}
+.page-actions{
+  max-width:340px; margin:0 auto 18px; display:flex; gap:10px;
+}
+.btn{
+  flex:1; border:none; border-radius:999px; padding:13px; font-weight:700; font-size:0.92rem;
+  cursor:pointer; font-family:inherit;
+}
+.btn-print{background:var(--red); color:#fff;}
+.btn-print:hover{background:var(--red-bright);}
+.btn-back{background:#fff; color:var(--red); border:1px solid var(--red);}
+
+.receipt{
+  max-width:340px; margin:0 auto;
+  background:#fff;
+  padding:22px 18px;
+  font-family:'Space Mono', monospace;
+  font-size:0.82rem;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+.receipt-header{text-align:center; margin-bottom:14px;}
+.receipt-logo{font-family:'Baloo 2', sans-serif; font-weight:700; font-size:1.3rem; color:var(--red);}
+.receipt-sub{font-size:0.68rem; letter-spacing:.06em; color:#8a7a6c; margin-top:2px;}
+.receipt-meta{font-size:0.72rem; color:#6b5b4c; margin-top:8px;}
+
+.dash{border-top:1px dashed #8a7a6c; margin:12px 0;}
+
+.receipt-item{margin-bottom:10px;}
+.receipt-item .line1{display:flex; justify-content:space-between; font-weight:700;}
+.receipt-item .line-detail{font-size:0.72rem; color:#6b5b4c; margin-top:2px; line-height:1.4;}
+
+.receipt-total{display:flex; justify-content:space-between; font-weight:700; font-size:1rem; margin-top:4px;}
+
+.receipt-block{margin-top:4px;}
+.receipt-block .label{font-size:0.68rem; text-transform:uppercase; letter-spacing:.06em; color:#8a7a6c;}
+.receipt-block .val{font-size:0.82rem; margin-bottom:8px;}
+
+.receipt-footer{text-align:center; font-size:0.72rem; color:#8a7a6c; margin-top:14px;}
+
+.empty-state{max-width:340px; margin:60px auto; text-align:center; font-family:'Space Mono',monospace; color:#6b5b4c;}
+
+@media print{
+  body{background:#fff; padding:0;}
+  .page-actions{display:none;}
+  .receipt{box-shadow:none; max-width:80mm; padding:8px 6px;}
+}
