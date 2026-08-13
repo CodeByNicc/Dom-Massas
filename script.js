@@ -1,8 +1,3 @@
-const CONFIG = {
-  whatsappNumber: "5581981377933",
-  restaurantName: "Don Massas"
-};
-
 const BOX_PRICE = 29.99;
 const PROTEIN_EXTRA_PRICE = 5.00;
 const ACOMP_EXTRA_PRICE = 3.00;
@@ -37,8 +32,8 @@ const ACOMPANHAMENTOS = [
 ];
 
 const CHEF_SUGGESTIONS = [
-  { name: "Don Carbonara", desc: "Linguine, em uma deliciosa emulsão de gemas e parmesão com cubos de bacon e pimenta do reino.", price: 29.99, img: "img/don-alfredo.jpg" },
-  { name: "Don Alfredo", desc: "O clássico ultra cremoso à base de manteiga e parmesão, servido com frango desfiado.", price: 29.99, img: "img/don-carbonara.jpg" },
+  { name: "Don Carbonara", desc: "Linguine, em uma deliciosa emulsão de gemas e parmesão com cubos de bacon e pimenta do reino.", price: 29.99, img: "img/don-carbonara.jpg" },
+  { name: "Don Alfredo", desc: "O clássico ultra cremoso à base de manteiga e parmesão, servido com frango desfiado.", price: 29.99, img: "img/don-alfredo.jpg" },
   { name: "Don Gamberi", desc: "Fettuccine envolvido em um delicioso molho de azeite e alho, com camarões, tomate fresco e cebolinho, trazendo um sabor leve e irresistível.", price: 29.99, img: "img/don-gamberi.jpeg" },
   { name: "Don Bolonhesa", desc: "Argolinha envolvida em um delicioso molho pomodoro com tomate italiano pelado e carne moída, finalizada com parmesão.", price: 29.99, img: "img/don-bolonhesa.jpeg" }
 ];
@@ -185,7 +180,32 @@ function renderBebidas(){
   `).join('');
 }
 
-function addSimpleItem(name, price){
+let toastTimer = null;
+function showToast(message){
+  let toast = document.getElementById('toast');
+  if (!toast){
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.remove('show');
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function bumpCartBadge(){
+  const badge = document.getElementById('cartCount');
+  badge.classList.remove('bump');
+  void badge.offsetWidth;
+  badge.classList.add('bump');
+}
+
+function addSimpleItem(name, price, btnEl){
   const existing = cartItems.find(i => i.name === name && !i.detail);
   if (existing){
     existing.qty += 1;
@@ -193,6 +213,20 @@ function addSimpleItem(name, price){
     cartItems.push({ uid: uidCounter++, name, detail: "", unitPrice: price, qty: 1 });
   }
   renderCart();
+  bumpCartBadge();
+  showToast(`✓ ${name} adicionado à comanda`);
+
+  if (btnEl){
+    const original = btnEl.textContent;
+    btnEl.textContent = 'Adicionado ✓';
+    btnEl.classList.add('added');
+    btnEl.disabled = true;
+    setTimeout(() => {
+      btnEl.textContent = original;
+      btnEl.classList.remove('added');
+      btnEl.disabled = false;
+    }, 1100);
+  }
 }
 
 function changeLineQty(uid, delta){
@@ -312,13 +346,42 @@ function getTrocoData(){
   return { valorDado, troco: Math.max(0, valorDado - total) };
 }
 
+function localFallbackOrderInfo(){
+  const now = new Date();
+  return {
+    numero: null, 
+    id: null,     
+    hora: now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })
+  };
+}
+
+async function getNextOrderInfo(summary){
+  if (!CONFIG.orderCounterEndpoint) return localFallbackOrderInfo();
+
+  try {
+    const res = await fetch(CONFIG.orderCounterEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS no Apps Script
+      body: JSON.stringify(summary)
+    });
+    const data = await res.json();
+    if (data && data.ok){
+      return { numero: data.numero, hora: data.hora, id: data.id || null };
+    }
+    return localFallbackOrderInfo();
+  } catch (err){
+    console.error('Não foi possível obter o número do pedido, usando reserva local:', err);
+    return localFallbackOrderInfo();
+  }
+}
+
 function renderSummaryRecap(){
   const lines = cartItems.map(i => `${i.qty}x ${i.name}${i.detail ? ' (' + i.detail + ')' : ''}`);
   document.getElementById('summaryRecap').innerHTML =
     lines.join('<br>') + `<br><strong>Total: ${formatBRL(cartTotal())}</strong>`;
 }
 
-function sendOrderToWhatsapp(){
+async function sendOrderToWhatsapp(){
   const form = document.getElementById('checkoutForm');
   if (!form.reportValidity()) return;
 
@@ -343,25 +406,61 @@ function sendOrderToWhatsapp(){
     }
   }
 
+  const sendBtn = document.getElementById('sendWhatsBtn');
+  const originalBtnText = sendBtn.textContent;
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Gerando pedido...';
+
+  let orderInfo;
+  try {
+    orderInfo = await getNextOrderInfo({
+      cliente: name,
+      telefone: phone,
+      endereco: address,
+      pagamento: payment,
+      total: cartTotal(),
+      trocoPara: trocoData ? trocoData.valorDado : null,
+      troco: trocoData ? trocoData.troco : null,
+      observacoes: notes,
+      itens: cartItems.map(i => ({ name: i.name, detail: i.detail, qty: i.qty, unitPrice: i.unitPrice }))
+    });
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = originalBtnText;
+  }
+
   const itemLines = cartItems.map(i => {
     const detailPart = i.detail ? `\n   _${i.detail}_` : '';
     return `• ${i.qty}x ${i.name} — ${formatBRL(i.unitPrice * i.qty)}${detailPart}`;
   }).join('\n');
 
-  const orderPayload = {
-    items: cartItems.map(i => ({ name: i.name, detail: i.detail, qty: i.qty, unitPrice: i.unitPrice })),
-    total: cartTotal(),
-    customer: {
-      name, phone, address, payment, notes,
-      trocoPara: trocoData ? trocoData.valorDado : null,
-      troco: trocoData ? trocoData.troco : null
-    },
-    date: Date.now()
-  };
   const printUrl = new URL('comanda.html', window.location.href);
-  printUrl.searchParams.set('pedido', encodeURIComponent(JSON.stringify(orderPayload)));
+  let incluirLinkNaMensagem = false;
 
-  let message = `*Novo pedido — ${CONFIG.restaurantName}*\n\n`;
+  if (orderInfo.id){
+    printUrl.searchParams.set('pedido', orderInfo.id);
+  } else {
+
+    const orderPayload = {
+      numero: orderInfo.numero,
+      hora: orderInfo.hora,
+      items: cartItems.map(i => ({ name: i.name, detail: i.detail, qty: i.qty, unitPrice: i.unitPrice })),
+      total: cartTotal(),
+      customer: {
+        name, phone, address, payment, notes,
+        trocoPara: trocoData ? trocoData.valorDado : null,
+        troco: trocoData ? trocoData.troco : null
+      },
+      date: Date.now()
+    };
+    printUrl.searchParams.set('pedido', encodeURIComponent(JSON.stringify(orderPayload)));
+    incluirLinkNaMensagem = true;
+  }
+
+  const pedidoLabel = orderInfo.numero ? `Nº ${String(orderInfo.numero).padStart(3, '0')}` : `${orderInfo.hora}`;
+
+  let message = `*Novo pedido — ${CONFIG.restaurantName}*\n`;
+  message += `*Pedido ${pedidoLabel}*${orderInfo.numero ? ` · ${orderInfo.hora}` : ''}\n\n`;
   message += `${itemLines}\n\n`;
   message += `*Total: ${formatBRL(cartTotal())}*\n\n`;
   message += `*Cliente:* ${name}\n`;
@@ -373,7 +472,9 @@ function sendOrderToWhatsapp(){
     message += `*Troco:* ${trocoData.troco > 0 ? formatBRL(trocoData.troco) : 'Não precisa'}\n`;
   }
   if (notes) message += `*Obs:* ${notes}\n`;
-  message += `\n🖨️ Imprimir comanda: ${printUrl.toString()}`;
+  if (incluirLinkNaMensagem){
+    message += `\n🖨️ Imprimir comanda: ${printUrl.toString()}`;
+  }
 
   const url = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
@@ -385,7 +486,7 @@ function handleClick(e){
   const action = el.dataset.action;
 
   if (action === 'add-simple'){
-    addSimpleItem(el.dataset.name, parseFloat(el.dataset.price));
+    addSimpleItem(el.dataset.name, parseFloat(el.dataset.price), el);
   } else if (action === 'change-qty'){
     changeLineQty(parseInt(el.dataset.uid, 10), parseInt(el.dataset.delta, 10));
   } else if (action === 'remove-line'){

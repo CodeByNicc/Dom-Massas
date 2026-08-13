@@ -36,6 +36,12 @@ body{
 .receipt-header{text-align:center; margin-bottom:14px;}
 .receipt-logo{font-family:'Baloo 2', sans-serif; font-weight:700; font-size:1.3rem; color:var(--red);}
 .receipt-sub{font-size:0.68rem; letter-spacing:.06em; color:#8a7a6c; margin-top:2px;}
+.receipt-order-num{
+  display:inline-block; margin-top:8px;
+  font-family:'Space Mono', monospace; font-weight:700; font-size:0.85rem;
+  background:var(--charcoal); color:#fff;
+  padding:4px 10px; border-radius:4px; letter-spacing:.03em;
+}
 .receipt-meta{font-size:0.72rem; color:#6b5b4c; margin-top:8px;}
 
 .dash{border-top:1px dashed #8a7a6c; margin:12px 0;}

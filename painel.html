@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Painel de pedidos — Don Massas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&family=Work+Sans:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="painel.css">
+<link rel="icon" type="image/x-icon" href="img/favicon.ico">
+</head>
+<body>
+
+<div class="gate" id="gateView">
+  <div class="gate-card">
+    <div class="gate-logo">Don Massas</div>
+    <div class="gate-title">Painel de pedidos</div>
+    <p class="gate-hint">Digite o código de acesso pra ver os pedidos do dia.</p>
+    <input type="password" id="gatePin" placeholder="Código de acesso" inputmode="numeric">
+    <button id="gateBtn">Entrar</button>
+    <div class="gate-error" id="gateError"></div>
+  </div>
+</div>
+
+<div class="panel" id="panelView" hidden>
+  <header class="panel-header">
+    <div class="panel-title">
+      <div class="logo-text">Don Massas</div>
+      <div class="logo-sub">Painel de pedidos</div>
+    </div>
+    <div class="panel-controls">
+      <input type="date" id="dateFilter">
+      <button id="refreshBtn" title="Atualizar agora">↻</button>
+    </div>
+  </header>
+
+  <div class="panel-summary" id="panelSummary">Carregando...</div>
+  <div class="orders-list" id="ordersList"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="painel.js"></script>
+</body>
+</html>
