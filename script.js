@@ -37,8 +37,10 @@ const ACOMPANHAMENTOS = [
 ];
 
 const CHEF_SUGGESTIONS = [
-  { name: "Don Carbonara", desc: "Linguine, em uma deliciosa emulsão de gemas e parmesão com cubos de bacon e pimenta do reino.", price: 29.99 },
-  { name: "Don Alfredo", desc: "O clássico ultra cremoso à base de manteiga e parmesão, servido com frango desfiado.", price: 29.99 }
+  { name: "Don Carbonara", desc: "Linguine, em uma deliciosa emulsão de gemas e parmesão com cubos de bacon e pimenta do reino.", price: 29.99, img: "img/don-alfredo.jpg" },
+  { name: "Don Alfredo", desc: "O clássico ultra cremoso à base de manteiga e parmesão, servido com frango desfiado.", price: 29.99, img: "img/don-carbonara.jpg" },
+  { name: "Don Gamberi", desc: "Fettuccine envolvido em um delicioso molho de azeite e alho, com camarões, tomate fresco e cebolinho, trazendo um sabor leve e irresistível.", price: 29.99, img: "img/don-gamberi.jpeg" },
+  { name: "Don Bolonhesa", desc: "Argolinha envolvida em um delicioso molho pomodoro com tomate italiano pelado e carne moída, finalizada com parmesão.", price: 29.99, img: "img/don-bolonhesa.jpeg" }
 ];
 
 const BEBIDAS = [
@@ -159,6 +161,7 @@ function addBoxToCart(){
 function renderChefSuggestions(){
   document.getElementById('chefGrid').innerHTML = CHEF_SUGGESTIONS.map(d => `
     <div class="dish-card">
+      ${d.img ? `<div class="dish-img"><img src="${d.img}" alt="${d.name}" loading="lazy"></div>` : ''}
       <div class="dish-tag">Sugestão do chef</div>
       <div class="dish-name">${d.name}</div>
       <div class="dish-desc">${d.desc}</div>

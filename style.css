@@ -219,8 +219,16 @@ header{
   padding:20px;
   display:flex; flex-direction:column; gap:10px;
   transition:box-shadow .15s ease, transform .15s ease;
+  overflow:hidden;
 }
 .dish-card:hover{box-shadow:0 8px 24px rgba(74,13,19,.1); transform:translateY(-2px);}
+.dish-img{
+  margin:-20px -20px 0;
+  aspect-ratio:4/3;
+  overflow:hidden;
+  background:var(--gold-light);
+}
+.dish-img img{width:100%; height:100%; object-fit:cover; display:block;}
 .dish-tag{
   align-self:flex-start; background:var(--gold-light); color:var(--charcoal);
   font-family:'Space Mono',monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:.08em;
