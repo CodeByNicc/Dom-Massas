@@ -19,7 +19,7 @@ const MOLHOS = [
 const ACOMPANHAMENTOS = [
   { id: "bacon", name: "Bacon em cubos" },
   { id: "calabresa", name: "Calabresa fatiada" },
-  { id: "frango", name: "Frango desfiado" },
+  { id: "frango", name: "Frango desfiado", extraPrice: 5.00 },
   { id: "presunto", name: "Presunto" },
   { id: "mussarela", name: "Mussarela" },
   { id: "milho", name: "Milho" },
@@ -27,9 +27,13 @@ const ACOMPANHAMENTOS = [
   { id: "tomate", name: "Tomate confit" },
   { id: "alho", name: "Alho frito" },
   { id: "ovo", name: "Ovo de codorna" },
-  { id: "camarao", name: "Camarão" },
+  { id: "camarao", name: "Camarão", extraPrice: 5.00 },
   { id: "cebola", name: "Cebola roxa" }
 ];
+
+function getAcompExtraPrice(item){
+  return item.extraPrice != null ? item.extraPrice : ACOMP_EXTRA_PRICE;
+}
 
 const CHEF_SUGGESTIONS = [
   { name: "Don Carbonara", desc: "Linguine, em uma deliciosa emulsão de gemas e parmesão com cubos de bacon e pimenta do reino.", price: 29.99, img: "img/don-carbonara.jpg" },
@@ -143,19 +147,34 @@ function renderBuilder(){
     </label>
   `).join('');
 
-  document.getElementById('acompGrid').innerHTML = ACOMPANHAMENTOS.map(a => `
-    <label class="option-card ${builderState.acompanhamentos.includes(a.id) ? 'selected' : ''}">
-      <input type="checkbox" value="${a.id}" data-action="toggle-acomp" data-id="${a.id}" ${builderState.acompanhamentos.includes(a.id) ? 'checked' : ''}>
+  document.getElementById('acompGrid').innerHTML = ACOMPANHAMENTOS.map(a => {
+    const idx = builderState.acompanhamentos.indexOf(a.id);
+    const selecionado = idx !== -1;
+    const extraPrice = getAcompExtraPrice(a);
+    let tagHtml;
+    if (selecionado && idx < MAX_FREE_ACOMP){
+      tagHtml = `<div class="acomp-tag incluso">Incluso</div>`;
+    } else if (selecionado){
+      tagHtml = `<div class="acomp-tag extra">+ ${formatBRL(extraPrice)}</div>`;
+    } else {
+      tagHtml = `<div class="acomp-tag hint">+ ${formatBRL(extraPrice)} se extra</div>`;
+    }
+    return `
+    <label class="option-card ${selecionado ? 'selected' : ''}">
+      <input type="checkbox" value="${a.id}" data-action="toggle-acomp" data-id="${a.id}" ${selecionado ? 'checked' : ''}>
       <div class="option-check"></div>
       <div class="option-name">${a.name}</div>
+      ${tagHtml}
     </label>
-  `).join('');
+  `;
+  }).join('');
 
   const count = builderState.acompanhamentos.length;
   const extraCount = Math.max(0, count - MAX_FREE_ACOMP);
+  const extraTotal = calcAcompExtraTotal();
   document.getElementById('acompCounter').textContent =
     extraCount > 0
-      ? `${count} selecionados (${MAX_FREE_ACOMP} inclusos + ${extraCount} extra${extraCount > 1 ? 's' : ''} a ${formatBRL(ACOMP_EXTRA_PRICE)})`
+      ? `${count} selecionados (${MAX_FREE_ACOMP} inclusos + ${extraCount} extra${extraCount > 1 ? 's' : ''} · + ${formatBRL(extraTotal)})`
       : `${count} de ${MAX_FREE_ACOMP} inclusos selecionados`;
 
   document.getElementById('proteinaVal').textContent = builderState.proteinaExtra;
@@ -182,9 +201,16 @@ function changeProteina(delta){
   renderBuilder();
 }
 
+function calcAcompExtraTotal(){
+  return builderState.acompanhamentos.reduce((total, id, idx) => {
+    if (idx < MAX_FREE_ACOMP) return total;
+    const item = ACOMPANHAMENTOS.find(a => a.id === id);
+    return total + (item ? getAcompExtraPrice(item) : ACOMP_EXTRA_PRICE);
+  }, 0);
+}
+
 function calcBuilderTotal(){
-  const extraCount = Math.max(0, builderState.acompanhamentos.length - MAX_FREE_ACOMP);
-  return BOX_PRICE + extraCount * ACOMP_EXTRA_PRICE + builderState.proteinaExtra * PROTEIN_EXTRA_PRICE;
+  return BOX_PRICE + calcAcompExtraTotal() + builderState.proteinaExtra * PROTEIN_EXTRA_PRICE;
 }
 
 function updateBuilderTotal(){
@@ -596,4 +622,4 @@ renderBebidas();
 renderCart();
 showCartView();
 updateStoreStatusUI();
-setInterval(updateStoreStatusUI, 60000); 
+setInterval(updateStoreStatusUI, 60000);
