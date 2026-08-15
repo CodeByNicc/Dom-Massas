@@ -95,8 +95,8 @@ function montarMensagemPronto(pedido){
   const numeroFmt = String(pedido.numero).padStart(3, '0');
   const primeiroNome = pedido.cliente ? pedido.cliente.trim().split(' ')[0] : '';
 
-  let msg = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! 🍝\n`;
-  msg += `Seu pedido Nº ${numeroFmt} do ${CONFIG.restaurantName} está pronto e já saiu para entrega! 🛵💨\n`;
+  let msg = `Oi${primeiroNome ? ' ' + primeiroNome : ''}!\n`;
+  msg += `Seu pedido Nº ${numeroFmt} do ${CONFIG.restaurantName} está pronto e já saiu para entrega!\n`;
   msg += `Chega até você em instantes. Obrigado pela preferência!`;
   return msg;
 }
