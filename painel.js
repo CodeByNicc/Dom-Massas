@@ -13,6 +13,7 @@ function showPanel(){
   document.getElementById('dateFilter').value = todayInputValue();
 
   iniciarAudio();
+  atualizarAvisoSom();
 
   loadOrders();
   startAutoRefresh();
@@ -71,29 +72,42 @@ function iniciarAudio(){
 
     if (audioContext.state === 'suspended'){
       audioContext.resume().then(() => {
-        audioLiberado = true;
+        audioLiberado = (audioContext.state === 'running');
+        atualizarAvisoSom();
       }).catch(err => {
         console.warn('Não foi possível liberar o áudio:', err);
+        atualizarAvisoSom();
       });
     } else {
       audioLiberado = true;
+      atualizarAvisoSom();
     }
 
   }catch(err){
     console.warn('Erro ao iniciar áudio:', err);
+    atualizarAvisoSom();
   }
+}
+
+function atualizarAvisoSom(){
+  const aviso = document.getElementById('somAviso');
+  if (!aviso) return;
+  const liberado = !!audioContext && audioContext.state === 'running';
+  aviso.textContent = liberado
+    ? '🔔 Testar som de alerta'
+    : '🔔 Toque aqui para ativar o som de alerta de novos pedidos';
+  aviso.classList.toggle('ativo', liberado);
 }
 
 function tocarNota_(freq, inicio, duracao, volume){
   const osc = audioContext.createOscillator();
   const gain = audioContext.createGain();
 
-  osc.type = 'square'; atenção
+  osc.type = 'square';
   osc.frequency.setValueAtTime(freq, inicio);
 
   gain.gain.setValueAtTime(0.0001, inicio);
   gain.gain.exponentialRampToValueAtTime(volume, inicio + 0.03);
-  gain.gain.setValueAtTime(volume, inicio + duracao - 0.05);
   gain.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao);
 
   osc.connect(gain);
@@ -103,11 +117,12 @@ function tocarNota_(freq, inicio, duracao, volume){
   osc.stop(inicio + duracao + 0.02);
 }
 
+// Toca um "toque" de campainha: 3 bipes (padrão sol-si-mi) em sequência.
 function tocarToqueCompleto_(inicio){
-  const volume = 0.9; 
-  tocarNota_(784, inicio, 0.22, volume);       
-  tocarNota_(988, inicio + 0.24, 0.22, volume); 
-  tocarNota_(1319, inicio + 0.48, 0.40, volume);
+  const volume = 0.9; // bem mais alto que antes (era 0.35)
+  tocarNota_(784, inicio, 0.22, volume);        // sol
+  tocarNota_(988, inicio + 0.24, 0.22, volume); // si
+  tocarNota_(1319, inicio + 0.48, 0.40, volume);// mi (nota final mais longa, sustenta o alerta)
 }
 
 function tocarSomNovoPedido(){
@@ -118,11 +133,25 @@ function tocarSomNovoPedido(){
       return;
     }
 
-    const agora = audioContext.currentTime;
+    const tocarAgora = () => {
+      const agora = audioContext.currentTime;
+      // Repete o toque 3 vezes, espaçado, pra ficar impossível de não perceber.
+      tocarToqueCompleto_(agora);
+      tocarToqueCompleto_(agora + 1.1);
+      tocarToqueCompleto_(agora + 2.2);
+    };
 
-    tocarToqueCompleto_(agora);
-    tocarToqueCompleto_(agora + 1.1);
-    tocarToqueCompleto_(agora + 2.2);
+    if (audioContext.state === 'running'){
+      tocarAgora();
+    } else {
+      audioContext.resume().then(() => {
+        atualizarAvisoSom();
+        if (audioContext.state === 'running') tocarAgora();
+      }).catch(err => {
+        console.warn('Áudio ainda bloqueado, toque na tela para liberar:', err);
+        atualizarAvisoSom();
+      });
+    }
 
   }catch(err){
     console.warn('Não foi possível tocar o som:', err);
@@ -359,6 +388,14 @@ document.getElementById('refreshBtn')
     iniciarAudio();
 
     loadOrders();
+  });
+
+document.getElementById('somAviso')
+  .addEventListener('click', () => {
+    iniciarAudio();
+    setTimeout(() => {
+      tocarSomNovoPedido();
+    }, 150);
   });
 
 
