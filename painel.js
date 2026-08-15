@@ -84,6 +84,32 @@ function iniciarAudio(){
   }
 }
 
+function tocarNota_(freq, inicio, duracao, volume){
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  osc.type = 'square'; atenção
+  osc.frequency.setValueAtTime(freq, inicio);
+
+  gain.gain.setValueAtTime(0.0001, inicio);
+  gain.gain.exponentialRampToValueAtTime(volume, inicio + 0.03);
+  gain.gain.setValueAtTime(volume, inicio + duracao - 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, inicio + duracao);
+
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+
+  osc.start(inicio);
+  osc.stop(inicio + duracao + 0.02);
+}
+
+function tocarToqueCompleto_(inicio){
+  const volume = 0.9; 
+  tocarNota_(784, inicio, 0.22, volume);       
+  tocarNota_(988, inicio + 0.24, 0.22, volume); 
+  tocarNota_(1319, inicio + 0.48, 0.40, volume);
+}
+
 function tocarSomNovoPedido(){
   try{
     iniciarAudio();
@@ -94,38 +120,9 @@ function tocarSomNovoPedido(){
 
     const agora = audioContext.currentTime;
 
-    const osc1 = audioContext.createOscillator();
-    const gain1 = audioContext.createGain();
-
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(880, agora);
-
-    gain1.gain.setValueAtTime(0.0001, agora);
-    gain1.gain.exponentialRampToValueAtTime(0.35, agora + 0.02);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, agora + 0.25);
-
-    osc1.connect(gain1);
-    gain1.connect(audioContext.destination);
-
-    osc1.start(agora);
-    osc1.stop(agora + 0.25);
-
-
-    const osc2 = audioContext.createOscillator();
-    const gain2 = audioContext.createGain();
-
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1175, agora + 0.28);
-
-    gain2.gain.setValueAtTime(0.0001, agora + 0.28);
-    gain2.gain.exponentialRampToValueAtTime(0.35, agora + 0.30);
-    gain2.gain.exponentialRampToValueAtTime(0.0001, agora + 0.55);
-
-    osc2.connect(gain2);
-    gain2.connect(audioContext.destination);
-
-    osc2.start(agora + 0.28);
-    osc2.stop(agora + 0.55);
+    tocarToqueCompleto_(agora);
+    tocarToqueCompleto_(agora + 1.1);
+    tocarToqueCompleto_(agora + 2.2);
 
   }catch(err){
     console.warn('Não foi possível tocar o som:', err);
@@ -247,7 +244,7 @@ function verificarNovosPedidos(pedidos, dataBR){
 
       setTimeout(() => {
         tocarSomNovoPedido();
-      }, 800);
+      }, 4000);
     }
   }
 
