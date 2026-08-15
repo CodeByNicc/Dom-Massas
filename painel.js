@@ -53,6 +53,18 @@ function dateInputToBR(value){
   return `${d}/${m}/${y}`;
 }
 
+async function excluirPedidoRemoto(id){
+  const url = `${CONFIG.orderCounterEndpoint}?excluir=${encodeURIComponent(id)}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function restaurarPedidoRemoto(id){
+  const url = `${CONFIG.orderCounterEndpoint}?restaurar=${encodeURIComponent(id)}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
 let audioContext = null;
 let audioLiberado = false;
 
@@ -103,7 +115,7 @@ function tocarNota_(freq, inicio, duracao, volume){
   const osc = audioContext.createOscillator();
   const gain = audioContext.createGain();
 
-  osc.type = 'square';
+  osc.type = 'square'; 
   osc.frequency.setValueAtTime(freq, inicio);
 
   gain.gain.setValueAtTime(0.0001, inicio);
@@ -117,12 +129,11 @@ function tocarNota_(freq, inicio, duracao, volume){
   osc.stop(inicio + duracao + 0.02);
 }
 
-// Toca um "toque" de campainha: 3 bipes (padrão sol-si-mi) em sequência.
 function tocarToqueCompleto_(inicio){
-  const volume = 0.9; // bem mais alto que antes (era 0.35)
-  tocarNota_(784, inicio, 0.22, volume);        // sol
-  tocarNota_(988, inicio + 0.24, 0.22, volume); // si
-  tocarNota_(1319, inicio + 0.48, 0.40, volume);// mi (nota final mais longa, sustenta o alerta)
+  const volume = 0.9; 
+  tocarNota_(784, inicio, 0.22, volume);        
+  tocarNota_(988, inicio + 0.24, 0.22, volume); 
+  tocarNota_(1319, inicio + 0.48, 0.40, volume);
 }
 
 function tocarSomNovoPedido(){
@@ -135,7 +146,6 @@ function tocarSomNovoPedido(){
 
     const tocarAgora = () => {
       const agora = audioContext.currentTime;
-      // Repete o toque 3 vezes, espaçado, pra ficar impossível de não perceber.
       tocarToqueCompleto_(agora);
       tocarToqueCompleto_(agora + 1.1);
       tocarToqueCompleto_(agora + 2.2);
@@ -166,6 +176,10 @@ document.addEventListener('click', () => {
 let autoRefreshTimer = null;
 
 const pedidosConhecidosPorData = {};
+
+let pedidosAtuais = [];
+let excluidosAtuais = [];
+let dataAtualBR = '';
 
 function startAutoRefresh(){
   if (autoRefreshTimer){
@@ -215,10 +229,15 @@ async function loadOrders(){
     }
 
     const pedidos = data.pedidos || [];
+    const excluidos = data.excluidos || [];
 
-    verificarNovosPedidos(pedidos, dataBR);
+    pedidosAtuais = pedidos;
+    excluidosAtuais = excluidos;
+    dataAtualBR = dataBR;
 
-    renderOrders(pedidos, dataBR);
+    verificarNovosPedidos(pedidos, excluidos, dataBR);
+
+    renderOrders(pedidos, excluidos, dataBR);
 
   }catch(err){
     console.error('Erro ao carregar pedidos:', err);
@@ -233,18 +252,23 @@ async function loadOrders(){
 }
 
 
-function verificarNovosPedidos(pedidos, dataBR){
+function verificarNovosPedidos(pedidos, excluidos, dataBR){
 
   const chaveData = dataBR;
 
-  const idsAtuais = new Set(
+  const idsAtivos = new Set(
     pedidos.map(p => String(p.id || p.numero))
   );
+
+  const idsTodos = new Set([
+    ...idsAtivos,
+    ...excluidos.map(p => String(p.id || p.numero))
+  ]);
 
 
   if (!pedidosConhecidosPorData[chaveData]){
 
-    pedidosConhecidosPorData[chaveData] = idsAtuais;
+    pedidosConhecidosPorData[chaveData] = idsTodos;
 
     return;
   }
@@ -278,19 +302,21 @@ function verificarNovosPedidos(pedidos, dataBR){
   }
 
 
-  pedidosConhecidosPorData[chaveData] = idsAtuais;
+  pedidosConhecidosPorData[chaveData] = idsTodos;
 }
 
 
-function renderOrders(pedidos, dataBR){
+function renderOrders(pedidos, excluidos, dataBR){
   const listEl = document.getElementById('ordersList');
   const summaryEl = document.getElementById('panelSummary');
+
+  renderHistoricoExcluidos(excluidos, dataBR);
 
   if (pedidos.length === 0){
 
     listEl.innerHTML =
       `<div class="empty">
-        Nenhum pedido em ${dataBR} ainda.
+        ${excluidos.length > 0 ? 'Todos os pedidos desse dia foram excluídos.' : `Nenhum pedido em ${dataBR} ainda.`}
       </div>`;
 
     summaryEl.textContent =
@@ -334,6 +360,8 @@ function renderOrders(pedidos, dataBR){
               }
             );
 
+        const idPedido = String(p.id || p.numero);
+
         return `
           <div class="order-card">
 
@@ -362,11 +390,61 @@ function renderOrders(pedidos, dataBR){
               Imprimir →
             </a>
 
+            <button
+              class="order-delete"
+              data-action="excluir-pedido"
+              data-id="${idPedido}"
+              title="Excluir pedido"
+            >
+              🗑️
+            </button>
+
           </div>
         `;
 
       })
       .join('');
+}
+
+function renderHistoricoExcluidos(excluidos, dataBR){
+  const wrap = document.getElementById('historicoExcluidos');
+  const listEl = document.getElementById('historicoExcluidosList');
+  const toggleBtn = document.getElementById('historicoExcluidosToggle');
+  if (!wrap || !listEl || !toggleBtn) return;
+
+  if (!excluidos || excluidos.length === 0){
+    wrap.hidden = true;
+    listEl.innerHTML = '';
+    return;
+  }
+
+  wrap.hidden = false;
+  toggleBtn.textContent = `🗑️ Pedidos excluídos em ${dataBR} (${excluidos.length})`;
+
+  const ordenados = excluidos.slice().sort((a, b) => b.numero - a.numero);
+
+  listEl.innerHTML = ordenados.map(p => {
+    const totalFmt = (parseFloat(p.total) || 0)
+      .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    return `
+      <div class="order-card excluido">
+        <div class="order-num">Nº ${String(p.numero).padStart(3, '0')}</div>
+        <div class="order-info">
+          <div class="order-cliente">${p.cliente || 'Sem nome'}</div>
+          <div class="order-meta">${p.hora} · ${p.pagamento} · ${totalFmt}</div>
+        </div>
+        <button
+          class="order-restore"
+          data-action="restaurar-pedido"
+          data-id="${String(p.id || p.numero)}"
+          title="Restaurar pedido"
+        >
+          ↺ Restaurar
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 
 document.getElementById('gateBtn')
@@ -403,6 +481,74 @@ document.getElementById('dateFilter')
   .addEventListener('change', () => {
 
     loadOrders();
+  });
+
+
+document.getElementById('ordersList')
+  .addEventListener('click', async e => {
+    const btn = e.target.closest('[data-action="excluir-pedido"]');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const pedido = pedidosAtuais.find(p => String(p.id || p.numero) === id);
+    if (!pedido) return;
+
+    const confirmado = confirm(
+      `Excluir o pedido Nº ${String(pedido.numero).padStart(3, '0')} (${pedido.cliente || 'sem nome'})?\n\n` +
+      `Ele vai sumir da lista e não vai entrar no total do dia. Você pode restaurar depois pelo histórico de excluídos.`
+    );
+    if (!confirmado) return;
+
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+      const resultado = await excluirPedidoRemoto(id);
+      if (!resultado.ok){
+        alert('Não foi possível excluir o pedido agora. Tente de novo em instantes.');
+        btn.disabled = false;
+        btn.textContent = '🗑️';
+        return;
+      }
+      await loadOrders();
+    } catch (err){
+      console.error('Erro ao excluir pedido:', err);
+      alert('Erro de conexão ao excluir o pedido. Tente de novo.');
+      btn.disabled = false;
+      btn.textContent = '🗑️';
+    }
+  });
+
+document.getElementById('historicoExcluidosList')
+  .addEventListener('click', async e => {
+    const btn = e.target.closest('[data-action="restaurar-pedido"]');
+    if (!btn) return;
+
+    btn.disabled = true;
+    const textoOriginal = btn.textContent;
+    btn.textContent = 'Restaurando…';
+
+    try {
+      const resultado = await restaurarPedidoRemoto(btn.dataset.id);
+      if (!resultado.ok){
+        alert('Não foi possível restaurar o pedido agora. Tente de novo em instantes.');
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+        return;
+      }
+      await loadOrders();
+    } catch (err){
+      console.error('Erro ao restaurar pedido:', err);
+      alert('Erro de conexão ao restaurar o pedido. Tente de novo.');
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  });
+
+document.getElementById('historicoExcluidosToggle')
+  .addEventListener('click', () => {
+    const listEl = document.getElementById('historicoExcluidosList');
+    listEl.hidden = !listEl.hidden;
   });
 
 

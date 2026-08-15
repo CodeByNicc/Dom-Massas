@@ -101,7 +101,33 @@ body{
 }
 .order-print:hover{background:var(--red-bright);}
 
+.order-delete{
+  flex-shrink:0; background:none; border:1px solid #e6dcc8; color:#8a7a6c;
+  width:38px; height:38px; border-radius:999px; font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.order-delete:hover{background:#fdeceb; border-color:var(--red-bright); color:var(--red-bright);}
+
+.historico-excluidos{margin-top:22px;}
+.historico-toggle{
+  width:100%; text-align:left; background:none; border:1px dashed #c9bba3;
+  border-radius:8px; padding:10px 14px; font-family:'Space Mono', monospace;
+  font-size:0.82rem; color:#8a7a6c; cursor:pointer;
+}
+.historico-toggle:hover{background:#fffdf7;}
+.historico-list{display:flex; flex-direction:column; gap:10px; margin-top:10px;}
+
+.order-card.excluido{opacity:0.75; background:#f3ede0;}
+.order-restore{
+  flex-shrink:0; background:#fff; color:var(--red); border:1px solid var(--red);
+  padding:9px 14px; border-radius:999px; font-weight:700; font-size:0.82rem;
+  white-space:nowrap; cursor:pointer;
+}
+.order-restore:hover{background:var(--red); color:#fff;}
+
 @media (max-width:480px){
   .order-card{flex-wrap:wrap;}
   .order-print{width:100%; text-align:center; order:3;}
+  .order-delete{order:4; margin-left:auto;}
+  .order-restore{width:100%; text-align:center; order:3;}
 }
