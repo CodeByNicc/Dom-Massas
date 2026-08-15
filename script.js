@@ -46,6 +46,70 @@ const BEBIDAS = [
   { name: "Água com gás", price: 4.00 }
 ];
 
+function toMinutos_(hhmm){
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function agoraNoFusoDaLoja_(){
+  const partes = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Recife',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).formatToParts(new Date());
+
+  const mapa = {};
+  partes.forEach(p => mapa[p.type] = p.value);
+  const diasSemana = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+  return {
+    diaSemana: diasSemana[mapa.weekday],
+    minutos: parseInt(mapa.hour, 10) * 60 + parseInt(mapa.minute, 10)
+  };
+}
+
+function getStoreStatus(){
+  const cfg = CONFIG.businessHours;
+  const { diaSemana, minutos } = agoraNoFusoDaLoja_();
+
+  if (diaSemana !== cfg.closedWeekday){
+    for (const r of cfg.ranges){
+      const inicio = toMinutos_(r.start), fim = toMinutos_(r.end);
+      if (minutos >= inicio && minutos < fim){
+        return { open: true, label: 'Aberto agora', detail: `Fecha às ${r.end}` };
+      }
+    }
+    const proximoHoje = cfg.ranges.find(r => toMinutos_(r.start) > minutos);
+    if (proximoHoje){
+      return { open: false, label: 'Fechado agora', detail: `Abrimos hoje às ${proximoHoje.start}` };
+    }
+  }
+
+  let dias = 1;
+  let candidato = (diaSemana + 1) % 7;
+  while (candidato === cfg.closedWeekday){
+    dias++;
+    candidato = (candidato + 1) % 7;
+  }
+  const quando = dias === 1 ? 'amanhã' : `em ${dias} dias`;
+  return { open: false, label: 'Fechado agora', detail: `Abrimos ${quando} às ${cfg.ranges[0].start}` };
+}
+
+function updateStoreStatusUI(){
+  const status = getStoreStatus();
+  const el = document.getElementById('storeStatus');
+  const labelEl = document.getElementById('storeStatusLabel');
+  if (!el || !labelEl) return;
+
+  labelEl.textContent = `${status.label} · ${status.detail}`;
+  el.classList.toggle('open', status.open);
+  el.classList.toggle('closed', !status.open);
+  document.body.classList.toggle('store-closed', !status.open);
+
+  return status.open;
+}
+
 let uidCounter = 1;
 const cartItems = [];
 
@@ -531,3 +595,5 @@ renderChefSuggestions();
 renderBebidas();
 renderCart();
 showCartView();
+updateStoreStatusUI();
+setInterval(updateStoreStatusUI, 60000); 
