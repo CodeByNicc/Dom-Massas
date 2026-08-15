@@ -501,8 +501,6 @@ async function sendOrderToWhatsapp(){
   sendBtn.disabled = true;
   sendBtn.textContent = 'Gerando pedido...';
 
-  // Abre a aba já aqui, ainda dentro do clique do usuário, para o navegador
-  // não bloquear como pop-up (isso acontece se abrirmos só depois do await).
   const whatsWindow = window.open('', '_blank');
   if (whatsWindow){
     whatsWindow.document.write(`
@@ -605,8 +603,6 @@ async function sendOrderToWhatsapp(){
   if (whatsWindow){
     whatsWindow.location.href = url;
   } else {
-    // Caso o navegador tenha bloqueado mesmo a aba em branco (raro),
-    // tenta abrir normalmente como último recurso.
     window.open(url, '_blank');
   }
 }
