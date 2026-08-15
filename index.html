@@ -149,8 +149,41 @@
         <input type="tel" id="custPhone" required placeholder="(81) 99999-9999">
       </div>
       <div class="field">
-        <label for="custAddress">Endereço de entrega</label>
-        <input type="text" id="custAddress" required placeholder="Rua, número, bairro">
+        <label for="custAddress">Rua e número</label>
+        <input type="text" id="custAddress" required placeholder="Ex: Rua das Flores, 123">
+      </div>
+      <div class="field">
+        <label for="custBairro">Bairro</label>
+        <select id="custBairro" required>
+          <option value="" disabled selected>Selecione seu bairro</option>
+          <optgroup label="Taxa de entrega R$ 5,00">
+            <option>Apipucos</option>
+            <option>Casa Amarela</option>
+            <option>Casa Forte</option>
+            <option>Poço da Panela</option>
+            <option>Dois Irmãos</option>
+            <option>Monteiro</option>
+          </optgroup>
+          <optgroup label="Taxa de entrega R$ 8,00">
+            <option>Parnamirim</option>
+            <option>Jaqueira</option>
+            <option>Tamarineira</option>
+            <option>Água Fria</option>
+            <option>Rosarinho</option>
+            <option>Graças</option>
+            <option>Aflitos</option>
+            <option>Arruda</option>
+            <option>Beberibe</option>
+          </optgroup>
+          <optgroup label="Taxa de entrega R$ 12,00">
+            <option>Encruzilhada</option>
+            <option>Espinheiro</option>
+            <option>Hipódromo</option>
+            <option>Campo Grande</option>
+            <option>Alto Santa Terezinha</option>
+          </optgroup>
+        </select>
+        <div class="entrega-info" id="entregaInfo"></div>
       </div>
       <div class="field">
         <label for="custPayment">Forma de pagamento</label>

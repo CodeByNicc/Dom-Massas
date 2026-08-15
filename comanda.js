@@ -72,8 +72,13 @@ function renderReceipt(order){
       </div>
       <div class="receipt-block">
         <div class="label">Endereço</div>
-        <div class="val">${order.customer.address}</div>
+        <div class="val">${order.customer.address}${order.customer.bairro ? ' — ' + order.customer.bairro : ''}</div>
       </div>
+      ${order.customer.bairro ? `
+      <div class="receipt-block">
+        <div class="label">Subtotal / Taxa de entrega</div>
+        <div class="val">${formatBRL(order.subtotal != null ? order.subtotal : (order.total - taxaEntregaPorBairro(order.customer.bairro)))} + ${formatBRL(order.taxaEntrega != null ? order.taxaEntrega : taxaEntregaPorBairro(order.customer.bairro))}</div>
+      </div>` : ''}
       <div class="receipt-block">
         <div class="label">Pagamento</div>
         <div class="val">${order.customer.payment}</div>

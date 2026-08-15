@@ -101,6 +101,26 @@ body{
 }
 .order-print:hover{background:var(--red-bright);}
 
+.order-pronto{
+  flex-shrink:0; background:var(--whats); color:#fff; border:none;
+  padding:9px 14px; border-radius:999px; font-weight:700; font-size:0.82rem;
+  white-space:nowrap; cursor:pointer;
+}
+.order-pronto:hover{filter:brightness(0.95);}
+.order-pronto:disabled{opacity:0.6; cursor:default;}
+
+.order-pronto-feito{
+  flex-shrink:0; display:flex; align-items:center; gap:6px;
+  background:#eaf7ee; color:#1c7a37; border:1px solid #cdeadb;
+  padding:8px 12px; border-radius:999px; font-weight:700; font-size:0.8rem;
+  white-space:nowrap;
+}
+.order-pronto-desfazer{
+  background:none; border:none; color:#1c7a37; opacity:0.6; cursor:pointer;
+  font-size:0.85rem; line-height:1; padding:0 2px;
+}
+.order-pronto-desfazer:hover{opacity:1;}
+
 .order-delete{
   flex-shrink:0; background:none; border:1px solid #e6dcc8; color:#8a7a6c;
   width:38px; height:38px; border-radius:999px; font-size:1rem; cursor:pointer;
@@ -128,6 +148,8 @@ body{
 @media (max-width:480px){
   .order-card{flex-wrap:wrap;}
   .order-print{width:100%; text-align:center; order:3;}
-  .order-delete{order:4; margin-left:auto;}
+  .order-pronto{width:100%; text-align:center; order:4;}
+  .order-pronto-feito{width:100%; justify-content:center; order:4;}
+  .order-delete{order:5; margin-left:auto;}
   .order-restore{width:100%; text-align:center; order:3;}
 }

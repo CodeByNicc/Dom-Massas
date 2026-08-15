@@ -11,3 +11,15 @@ const CONFIG = {
     ]
   }
 };
+
+const BAIRROS_ENTREGA = [
+  { taxa: 5, bairros: ["Apipucos", "Casa Amarela", "Casa Forte", "Poço da Panela", "Dois Irmãos", "Monteiro"] },
+  { taxa: 8, bairros: ["Parnamirim", "Jaqueira", "Tamarineira", "Água Fria", "Rosarinho", "Graças", "Aflitos", "Arruda", "Beberibe"] },
+  { taxa: 12, bairros: ["Encruzilhada", "Espinheiro", "Hipódromo", "Campo Grande", "Alto Santa Terezinha"] }
+];
+
+function taxaEntregaPorBairro(bairro){
+  if (!bairro) return 0;
+  const grupo = BAIRROS_ENTREGA.find(g => g.bairros.includes(bairro));
+  return grupo ? grupo.taxa : 0;
+}

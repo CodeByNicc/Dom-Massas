@@ -419,6 +419,11 @@ body.store-closed #sendWhatsBtn::after{
   background:#fff;
 }
 .field textarea{resize:vertical; min-height:60px;}
+.entrega-info{
+  margin-top:8px; font-family:'Space Mono', monospace; font-size:0.82rem;
+  padding:8px 10px; border-radius:var(--radius);
+  background:#eaf7ee; color:#1c7a37;
+}
 .troco-info{
   margin-top:8px; font-family:'Space Mono', monospace; font-size:0.82rem;
   padding:8px 10px; border-radius:var(--radius);

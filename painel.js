@@ -66,6 +66,41 @@ async function restaurarPedidoRemoto(id){
   return res.json();
 }
 
+async function marcarProntoRemoto(id){
+  const url = `${CONFIG.orderCounterEndpoint}?pronto=${encodeURIComponent(id)}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function desfazerProntoRemoto(id){
+  const url = `${CONFIG.orderCounterEndpoint}?desfazerPronto=${encodeURIComponent(id)}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+function normalizarTelefoneBR(telefone){
+  let digits = String(telefone || '').replace(/\D/g, '');
+  if (!digits) return '';
+
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)){
+    return digits;
+  }
+  if (digits.length === 10 || digits.length === 11){
+    return '55' + digits;
+  }
+  return digits;
+}
+
+function montarMensagemPronto(pedido){
+  const numeroFmt = String(pedido.numero).padStart(3, '0');
+  const primeiroNome = pedido.cliente ? pedido.cliente.trim().split(' ')[0] : '';
+
+  let msg = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! 🍝\n`;
+  msg += `Seu pedido Nº ${numeroFmt} do ${CONFIG.restaurantName} está pronto e já saiu para entrega! 🛵💨\n`;
+  msg += `Chega até você em instantes. Obrigado pela preferência!`;
+  return msg;
+}
+
 let audioContext = null;
 let audioLiberado = false;
 
@@ -438,6 +473,29 @@ function renderOrders(pedidos, excluidos, dataBR){
 
         const idPedido = String(p.id || p.numero);
 
+        const prontoHtml = p.prontoEm
+          ? `
+            <div class="order-pronto-feito" title="Avisado em ${p.prontoEm}">
+              ✅ Avisado
+              <button
+                class="order-pronto-desfazer"
+                data-action="desfazer-pronto"
+                data-id="${idPedido}"
+                title="Desfazer aviso de pronto"
+              >✕</button>
+            </div>
+          `
+          : `
+            <button
+              class="order-pronto"
+              data-action="marcar-pronto"
+              data-id="${idPedido}"
+              title="Avisar cliente que o pedido está pronto"
+            >
+              ✅ Pronto
+            </button>
+          `;
+
         return `
           <div class="order-card">
 
@@ -452,7 +510,7 @@ function renderOrders(pedidos, excluidos, dataBR){
               </div>
 
               <div class="order-meta">
-                ${p.hora} · ${p.pagamento} · ${totalFmtItem}
+                ${p.hora}${p.bairro ? ' · ' + p.bairro : ''} · ${p.pagamento} · ${totalFmtItem}
               </div>
 
             </div>
@@ -465,6 +523,8 @@ function renderOrders(pedidos, excluidos, dataBR){
             >
               Imprimir →
             </a>
+
+            ${prontoHtml}
 
             <button
               class="order-delete"
@@ -625,6 +685,81 @@ document.getElementById('historicoExcluidosToggle')
   .addEventListener('click', () => {
     const listEl = document.getElementById('historicoExcluidosList');
     listEl.hidden = !listEl.hidden;
+  });
+
+document.getElementById('ordersList')
+  .addEventListener('click', async e => {
+    const btn = e.target.closest('[data-action="marcar-pronto"]');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    const pedido = pedidosAtuais.find(p => String(p.id || p.numero) === id);
+    if (!pedido) return;
+
+    if (!pedido.telefone){
+      alert('Esse pedido não tem telefone salvo, não dá pra avisar pelo WhatsApp.');
+      return;
+    }
+
+    const confirmado = confirm(
+      `Avisar ${pedido.cliente || 'o cliente'} que o pedido Nº ${String(pedido.numero).padStart(3, '0')} está pronto?\n\n` +
+      `Isso vai abrir o WhatsApp com a mensagem pronta — só falta você apertar enviar.`
+    );
+    if (!confirmado) return;
+
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    const whatsWindow = window.open('', '_blank');
+
+    try {
+      const resultado = await marcarProntoRemoto(id);
+      if (!resultado.ok){
+        if (whatsWindow) whatsWindow.close();
+        alert('Não foi possível marcar o pedido como pronto agora. Tente de novo.');
+        btn.disabled = false;
+        btn.textContent = '✅ Pronto';
+        return;
+      }
+
+      const telefone = normalizarTelefoneBR(pedido.telefone);
+      const mensagem = montarMensagemPronto(pedido);
+      const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+
+      if (whatsWindow) whatsWindow.location.href = url;
+      else window.open(url, '_blank');
+
+      await loadOrders();
+    } catch (err){
+      console.error('Erro ao marcar pedido como pronto:', err);
+      if (whatsWindow) whatsWindow.close();
+      alert('Erro de conexão. Tente de novo.');
+      btn.disabled = false;
+      btn.textContent = '✅ Pronto';
+    }
+  });
+
+document.getElementById('ordersList')
+  .addEventListener('click', async e => {
+    const btn = e.target.closest('[data-action="desfazer-pronto"]');
+    if (!btn) return;
+
+    const id = btn.dataset.id;
+    btn.disabled = true;
+
+    try {
+      const resultado = await desfazerProntoRemoto(id);
+      if (!resultado.ok){
+        alert('Não foi possível desfazer agora. Tente de novo.');
+        btn.disabled = false;
+        return;
+      }
+      await loadOrders();
+    } catch (err){
+      console.error('Erro ao desfazer aviso de pronto:', err);
+      alert('Erro de conexão. Tente de novo.');
+      btn.disabled = false;
+    }
   });
 
 

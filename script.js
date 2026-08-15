@@ -342,6 +342,15 @@ function cartCount(){
   return cartItems.reduce((sum, i) => sum + i.qty, 0);
 }
 
+function taxaEntregaSelecionada(){
+  const select = document.getElementById('custBairro');
+  return taxaEntregaPorBairro(select ? select.value : '');
+}
+
+function orderTotal(){
+  return cartTotal() + taxaEntregaSelecionada();
+}
+
 function renderCart(){
   const body = document.getElementById('ticketBody');
   document.getElementById('cartCount').textContent = cartCount();
@@ -392,7 +401,16 @@ function showCheckoutView(){
   cartView.classList.remove('view-active');
   checkoutView.classList.add('view-active');
   renderSummaryRecap();
+  updateEntregaUI();
   updateTrocoUI();
+}
+
+function updateEntregaUI(){
+  const info = document.getElementById('entregaInfo');
+  if (!info) return;
+  const taxa = taxaEntregaSelecionada();
+  const bairro = document.getElementById('custBairro').value;
+  info.textContent = bairro ? `Taxa de entrega para ${bairro}: ${formatBRL(taxa)}` : '';
 }
 
 function updateTrocoUI(){
@@ -408,7 +426,7 @@ function updateTrocoUI(){
   }
 
   const valorDado = parseFloat(document.getElementById('custTrocoPara').value);
-  const total = cartTotal();
+  const total = orderTotal();
 
   if (isNaN(valorDado) || valorDado <= 0){
     info.textContent = '';
@@ -432,7 +450,7 @@ function getTrocoData(){
   if (payment !== 'Dinheiro') return null;
   const valorDado = parseFloat(document.getElementById('custTrocoPara').value);
   if (isNaN(valorDado) || valorDado <= 0) return null;
-  const total = cartTotal();
+  const total = orderTotal();
   return { valorDado, troco: Math.max(0, valorDado - total) };
 }
 
@@ -451,7 +469,7 @@ async function getNextOrderInfo(summary){
   try {
     const res = await fetch(CONFIG.orderCounterEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS no Apps Script
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(summary)
     });
     const data = await res.json();
@@ -467,8 +485,15 @@ async function getNextOrderInfo(summary){
 
 function renderSummaryRecap(){
   const lines = cartItems.map(i => `${i.qty}x ${i.name}${i.detail ? ' (' + i.detail + ')' : ''}`);
-  document.getElementById('summaryRecap').innerHTML =
-    lines.join('<br>') + `<br><strong>Total: ${formatBRL(cartTotal())}</strong>`;
+  const taxa = taxaEntregaSelecionada();
+  const bairro = document.getElementById('custBairro').value;
+
+  let resumo = lines.join('<br>');
+  resumo += `<br><br>Subtotal: ${formatBRL(cartTotal())}`;
+  resumo += `<br>Taxa de entrega${bairro ? ` (${bairro})` : ''}: ${formatBRL(taxa)}`;
+  resumo += `<br><strong>Total: ${formatBRL(orderTotal())}</strong>`;
+
+  document.getElementById('summaryRecap').innerHTML = resumo;
 }
 
 async function sendOrderToWhatsapp(){
@@ -478,8 +503,19 @@ async function sendOrderToWhatsapp(){
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const address = document.getElementById('custAddress').value.trim();
+  const bairro = document.getElementById('custBairro').value;
   const payment = document.getElementById('custPayment').value;
   const notes = document.getElementById('custNotes').value.trim();
+
+  if (!bairro){
+    alert('Selecione o bairro pra calcularmos a taxa de entrega.');
+    document.getElementById('custBairro').focus();
+    return;
+  }
+
+  const taxaEntrega = taxaEntregaPorBairro(bairro);
+  const subtotal = cartTotal();
+  const total = subtotal + taxaEntrega;
 
   const trocoData = getTrocoData();
   if (payment === 'Dinheiro'){
@@ -489,8 +525,8 @@ async function sendOrderToWhatsapp(){
       document.getElementById('custTrocoPara').focus();
       return;
     }
-    if (valorDadoRaw < cartTotal()){
-      alert(`O valor informado é menor que o total do pedido (${formatBRL(cartTotal())}).`);
+    if (valorDadoRaw < total){
+      alert(`O valor informado é menor que o total do pedido (${formatBRL(total)}).`);
       document.getElementById('custTrocoPara').focus();
       return;
     }
@@ -539,8 +575,11 @@ async function sendOrderToWhatsapp(){
       cliente: name,
       telefone: phone,
       endereco: address,
+      bairro: bairro,
       pagamento: payment,
-      total: cartTotal(),
+      subtotal: subtotal,
+      taxaEntrega: taxaEntrega,
+      total: total,
       trocoPara: trocoData ? trocoData.valorDado : null,
       troco: trocoData ? trocoData.troco : null,
       observacoes: notes,
@@ -567,9 +606,11 @@ async function sendOrderToWhatsapp(){
       numero: orderInfo.numero,
       hora: orderInfo.hora,
       items: cartItems.map(i => ({ name: i.name, detail: i.detail, qty: i.qty, unitPrice: i.unitPrice })),
-      total: cartTotal(),
+      subtotal: subtotal,
+      taxaEntrega: taxaEntrega,
+      total: total,
       customer: {
-        name, phone, address, payment, notes,
+        name, phone, address, bairro, payment, notes,
         trocoPara: trocoData ? trocoData.valorDado : null,
         troco: trocoData ? trocoData.troco : null
       },
@@ -584,10 +625,12 @@ async function sendOrderToWhatsapp(){
   let message = `*Novo pedido — ${CONFIG.restaurantName}*\n`;
   message += `*Pedido ${pedidoLabel}*${orderInfo.numero ? ` · ${orderInfo.hora}` : ''}\n\n`;
   message += `${itemLines}\n\n`;
-  message += `*Total: ${formatBRL(cartTotal())}*\n\n`;
+  message += `*Subtotal:* ${formatBRL(subtotal)}\n`;
+  message += `*Taxa de entrega (${bairro}):* ${formatBRL(taxaEntrega)}\n`;
+  message += `*Total: ${formatBRL(total)}*\n\n`;
   message += `*Cliente:* ${name}\n`;
   message += `*Telefone:* ${phone}\n`;
-  message += `*Endereço:* ${address}\n`;
+  message += `*Endereço:* ${address} — ${bairro}\n`;
   message += `*Pagamento:* ${payment}\n`;
   if (trocoData){
     message += `*Troco para:* ${formatBRL(trocoData.valorDado)}\n`;
@@ -644,6 +687,11 @@ document.getElementById('backToCartBtn').addEventListener('click', showCartView)
 document.getElementById('sendWhatsBtn').addEventListener('click', sendOrderToWhatsapp);
 document.getElementById('custPayment').addEventListener('change', updateTrocoUI);
 document.getElementById('custTrocoPara').addEventListener('input', updateTrocoUI);
+document.getElementById('custBairro').addEventListener('change', () => {
+  updateEntregaUI();
+  renderSummaryRecap();
+  updateTrocoUI();
+});
 document.getElementById('addBoxBtn').addEventListener('click', addBoxToCart);
 document.getElementById('proteinaMinus').addEventListener('click', () => changeProteina(-1));
 document.getElementById('proteinaPlus').addEventListener('click', () => changeProteina(1));
