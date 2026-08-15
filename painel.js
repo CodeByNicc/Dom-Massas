@@ -32,6 +32,7 @@ function tryUnlock(){
     sessionStorage.setItem('painelOk', '1');
 
     iniciarAudio();
+    pedirPermissaoNotificacao();
 
     showPanel();
   } else {
@@ -168,12 +169,88 @@ function tocarSomNovoPedido(){
   }
 }
 
+function pedirPermissaoNotificacao(){
+  if ('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission();
+  }
+}
+
+function mostrarNotificacaoNovoPedido(pedidosNovos){
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const qtd = pedidosNovos.length;
+  const titulo = qtd === 1 ? 'Novo pedido! 🍝' : `${qtd} novos pedidos! 🍝`;
+  const primeiro = pedidosNovos[0];
+  const corpo = qtd === 1
+    ? `Nº ${String(primeiro.numero).padStart(3, '0')} · ${primeiro.cliente || 'Sem nome'}`
+    : 'Confira o painel de pedidos.';
+
+  try{
+    const n = new Notification(titulo, { body: corpo, tag: 'novo-pedido-' + Date.now() });
+    n.onclick = () => { window.focus(); n.close(); };
+  }catch(err){
+    console.warn('Não foi possível mostrar a notificação:', err);
+  }
+}
+
 document.addEventListener('click', () => {
   iniciarAudio();
 }, { passive: true });
 
 
 let autoRefreshTimer = null;
+let refreshWorker = null;
+
+function iniciarTimerAtualizacao(intervaloMs){
+  pararTimerAtualizacao();
+
+  try{
+    const workerCode = `
+      let intervalId = null;
+      self.onmessage = function(e){
+        if (e.data && e.data.action === 'start'){
+          if (intervalId) clearInterval(intervalId);
+          intervalId = setInterval(() => self.postMessage('tick'), e.data.ms);
+        }
+        if (e.data && e.data.action === 'stop'){
+          if (intervalId) clearInterval(intervalId);
+        }
+      };
+    `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    refreshWorker = new Worker(URL.createObjectURL(blob));
+    refreshWorker.onmessage = () => loadOrders();
+    refreshWorker.onerror = () => {
+      console.warn('Worker de atualização falhou, usando timer normal como reserva.');
+      refreshWorker = null;
+      iniciarTimerReserva_(intervaloMs);
+    };
+    refreshWorker.postMessage({ action: 'start', ms: intervaloMs });
+  }catch(err){
+    console.warn('Não foi possível criar o Worker, usando timer normal como reserva:', err);
+    iniciarTimerReserva_(intervaloMs);
+  }
+}
+
+function iniciarTimerReserva_(intervaloMs){
+  autoRefreshTimer = setInterval(loadOrders, intervaloMs);
+}
+
+function pararTimerAtualizacao(){
+  if (refreshWorker){
+    refreshWorker.postMessage({ action: 'stop' });
+    refreshWorker.terminate();
+    refreshWorker = null;
+  }
+  if (autoRefreshTimer){
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+}
+
+function startAutoRefresh(){
+  iniciarTimerAtualizacao(10000);
+}
 
 const pedidosConhecidosPorData = {};
 
@@ -181,13 +258,11 @@ let pedidosAtuais = [];
 let excluidosAtuais = [];
 let dataAtualBR = '';
 
-function startAutoRefresh(){
-  if (autoRefreshTimer){
-    clearInterval(autoRefreshTimer);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible'){
+    loadOrders();
   }
-
-  autoRefreshTimer = setInterval(loadOrders, 10000);
-}
+});
 
 async function loadOrders(){
   const listEl = document.getElementById('ordersList');
@@ -292,6 +367,7 @@ function verificarNovosPedidos(pedidos, excluidos, dataBR){
     );
 
     tocarSomNovoPedido();
+    mostrarNotificacaoNovoPedido(pedidosNovos);
 
     if (pedidosNovos.length > 1){
 

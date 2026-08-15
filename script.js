@@ -504,6 +504,36 @@ async function sendOrderToWhatsapp(){
   // Abre a aba já aqui, ainda dentro do clique do usuário, para o navegador
   // não bloquear como pop-up (isso acontece se abrirmos só depois do await).
   const whatsWindow = window.open('', '_blank');
+  if (whatsWindow){
+    whatsWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <title>Preparando seu pedido...</title>
+        <style>
+          body{
+            margin:0; height:100vh; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:16px;
+            background:#7A1018; color:#F7ECD1;
+            font-family:'Work Sans', Arial, sans-serif;
+          }
+          .spinner{
+            width:38px; height:38px; border-radius:50%;
+            border:4px solid rgba(247,236,209,.3); border-top-color:#F7ECD1;
+            animation:girar .8s linear infinite;
+          }
+          @keyframes girar{ to{ transform:rotate(360deg); } }
+        </style>
+      </head>
+      <body>
+        <div class="spinner"></div>
+        <div>Preparando seu pedido...</div>
+      </body>
+      </html>
+    `);
+    whatsWindow.document.close();
+  }
 
   let orderInfo;
   try {
