@@ -1304,12 +1304,13 @@ async function sendOrderToWhatsapp(){
   try {
 
     const summary = {
-      nome: name,
+      cliente: name,
       telefone: phone,
       endereco: address,
       bairro,
       pagamento: payment,
-      troco: trocoData,
+      trocoPara: trocoData ? trocoData.valorDado : null,
+      troco: trocoData ? trocoData.troco : null,
       observacoes: notes,
       itens: cartItems,
       subtotal,
@@ -1324,7 +1325,7 @@ async function sendOrderToWhatsapp(){
       `*DON MASSAS*%0A%0A`;
 
     mensagem +=
-      `*Pedido #${orderInfo.numero || '---'}*%0A`;
+      `*Pedido Nº ${encodeURIComponent(orderInfo.numero || '---')}*%0A`;
 
     mensagem +=
       `Cliente: ${encodeURIComponent(name)}%0A`;
@@ -1423,37 +1424,6 @@ async function sendOrderToWhatsapp(){
     sendBtn.textContent =
       originalBtnText;
   }
-}
-
-function taxaEntregaPorBairro(bairro){
-
-  const taxas = {
-
-    "Apipucos": 5,
-    "Casa Amarela": 5,
-    "Casa Forte": 5,
-    "Poço da Panela": 5,
-    "Dois Irmãos": 5,
-    "Monteiro": 5,
-
-    "Parnamirim": 8,
-    "Jaqueira": 8,
-    "Tamarineira": 8,
-    "Água Fria": 8,
-    "Rosarinho": 8,
-    "Graças": 8,
-    "Aflitos": 8,
-    "Arruda": 8,
-    "Beberibe": 8,
-
-    "Encruzilhada": 12,
-    "Espinheiro": 12,
-    "Hipódromo": 12,
-    "Campo Grande": 12,
-    "Alto Santa Terezinha": 12
-  };
-
-  return taxas[bairro] || 0;
 }
 
 function bindEvents(){
