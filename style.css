@@ -1226,6 +1226,27 @@ footer p{
     padding:14px;
   }
 
+  #chefGrid{
+    display:flex;
+    grid-template-columns:none;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    gap:14px;
+    padding:4px 4px 12px;
+    margin:0 -4px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  #chefGrid::-webkit-scrollbar{
+    display:none;
+  }
+
+  #chefGrid .dish-card{
+    flex:0 0 78%;
+    scroll-snap-align:start;
+  }
+
   #proteinaGrid{
     grid-template-columns:1fr;
   }
